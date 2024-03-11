@@ -1,2 +1,7 @@
-python-decouple==3.8
-pydantic==2.6.3
+fastapi
+uvicorn
+pymongo
+passlib
+python-jose[cryptography]
+python-dotenv
+jwt

@@ -3,17 +3,46 @@ from fastapi import APIRouter, HTTPException, Depends
 from app.api.auth.models import User, UserInDB, EmailCode
 from app.api.auth.security import verify_password, get_password_hash
 from app.db import db
+import jwt
+from datetime import datetime, timedelta
+import random
+from decouple import config
+import string
 
 router = APIRouter()
 
+SECRET_KEY = config("SECRET_KEY")
+REFRESH_SECRET_KEY = config("REFRESH_SECRET_KEY")
+ALGORITHM = "HS256"
 
-@router.post("/token")
-async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
-    user = authenticate_user(form_data.username, form_data.password)
-    if not user:
-        raise HTTPException(status_code=401, detail="Incorrect username or password")
-    access_token = create_access_token(data={"sub": user.username})
-    return {"access_token": access_token, "token_type": "bearer"}
+
+def generate_code(length=6):
+    return ''.join(random.choices(string.digits, k=length))
+
+# Function to create access token
+def create_access_token(data: dict, expires_delta: timedelta):
+    to_encode = data.copy()
+    expire = datetime.utcnow() + expires_delta
+    to_encode.update({"exp": expire})
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return encoded_jwt
+
+# Function to create refresh token (optional)
+def create_refresh_token(data: dict, expires_delta: timedelta):
+    to_encode = data.copy()
+    expire = datetime.utcnow() + expires_delta
+    to_encode.update({"exp": expire})
+    encoded_jwt = jwt.encode(to_encode, REFRESH_SECRET_KEY, algorithm=ALGORITHM)
+    return encoded_jwt
+
+
+# @router.post("/token")
+# async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
+#     user = authenticate_user(form_data.username, form_data.password)
+#     if not user:
+#         raise HTTPException(status_code=401, detail="Incorrect username or password")
+#     access_token = create_access_token(data={"sub": user.username})
+#     return {"access_token": access_token, "token_type": "bearer"}
 
 
 def authenticate_user(username: str, password: str):
