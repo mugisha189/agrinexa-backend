@@ -1,15 +1,32 @@
-# app/api/auth/models.py
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
+from typing import Optional
 
 class User(BaseModel):
-    username: str
-    email: str
-    hashed_password: str
+    firstname: str
+    lastname: str
+    email: Optional[EmailStr] = None
+    phone: Optional[str] = None
+    password: str
+    location:str
+    emailVerified: Optional[bool] = False 
+    phoneVerified: Optional[bool] = False 
 
 class UserInDB(User):
     id: str
 
-
 class EmailCode(BaseModel):
-    email: str
+    email: EmailStr
     code: str
+    
+    
+class LoginModel(BaseModel):
+    email:EmailStr
+    password:str
+
+
+
+class AuthResponseModel(BaseModel):
+    access_token:str
+    refresh_token:str
+    user:User
+

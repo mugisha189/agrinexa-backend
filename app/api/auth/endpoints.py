@@ -1,25 +1,26 @@
-# app/api/auth/endpoints.py
 from fastapi import APIRouter, HTTPException, Depends
-from app.api.auth.models import User, UserInDB, EmailCode
+from app.api.auth.models import User, LoginModel,AuthResponseModel
 from app.api.auth.security import verify_password, get_password_hash
 from app.db import db
-import jwt
+from jwt import jwt
 from datetime import datetime, timedelta
 import random
-from decouple import config
 import string
+from decouple import config
 
 router = APIRouter()
 
 SECRET_KEY = config("SECRET_KEY")
 REFRESH_SECRET_KEY = config("REFRESH_SECRET_KEY")
 ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
+REFRESH_TOKEN_EXPIRE_DAYS = 30
 
 
 def generate_code(length=6):
     return ''.join(random.choices(string.digits, k=length))
 
-# Function to create access token
+
 def create_access_token(data: dict, expires_delta: timedelta):
     to_encode = data.copy()
     expire = datetime.utcnow() + expires_delta
@@ -27,7 +28,7 @@ def create_access_token(data: dict, expires_delta: timedelta):
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
-# Function to create refresh token (optional)
+
 def create_refresh_token(data: dict, expires_delta: timedelta):
     to_encode = data.copy()
     expire = datetime.utcnow() + expires_delta
@@ -36,61 +37,63 @@ def create_refresh_token(data: dict, expires_delta: timedelta):
     return encoded_jwt
 
 
-# @router.post("/token")
-# async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
-#     user = authenticate_user(form_data.username, form_data.password)
-#     if not user:
-#         raise HTTPException(status_code=401, detail="Incorrect username or password")
-#     access_token = create_access_token(data={"sub": user.username})
-#     return {"access_token": access_token, "token_type": "bearer"}
-
-
-def authenticate_user(username: str, password: str):
-    user = db.users.find_one({"username": username})
-    if not user or not verify_password(password, user["hashed_password"]):
-        return False
+def authenticate_user(email: str, password: str):
+    user = db.users.find_one({"email": email})
+    if not user or not verify_password(password, user["password"]):
+        return None
     return user
 
 
-@router.post("/register", response_model=User)
+@router.post("/login",response_model=AuthResponseModel)
+async def login(cred:LoginModel):
+    creds = dict(user)
+    user = authenticate_user(creds["email"], creds["password"])
+    if not user:
+        raise HTTPException(status_code=401, detail="Incorrect username or password")
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={"sub": user["email"]},
+        expires_delta=access_token_expires
+    )
+    return {
+        "user": {
+            "firstname": user["firstname"],
+            "lastname": user["lastname"],
+            "email": user["email"],
+            "phone": user["phone"],  
+        },
+        "access_token": access_token,
+    }
+
+
+@router.post("/register",response_model=AuthResponseModel)
 async def register_user(user: User):
     user_data = user.dict()
-    user_data["hashed_password"] = get_password_hash(user_data.pop("password"))
+    user_data["password"] = get_password_hash(user_data.pop("password"))
+    user_data["emailVerified"] = False
+    user_data["phoneVerified"] = False
     user_id = db.users.insert_one(user_data).inserted_id
     user_in_db = db.users.find_one({"_id": user_id})
-    return UserInDB(**user_in_db)
 
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    refresh_token_expires = timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
 
-@router.post("/forgot-password")
-async def forgot_password(email: str):
-    user = db.users.find_one({"email": email})
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    code = generate_code()  
-    send_code_to_email(email, code)  
-    db.codes.insert_one({"email": email, "code": code})
-    return {"message": "Code sent successfully"}
+    access_token = create_access_token(
+        data={"sub": user_in_db["email"]},
+        expires_delta=access_token_expires
+    )
+    refresh_token = create_refresh_token(
+        data={"sub": user_in_db["email"]},
+        expires_delta=refresh_token_expires
+    )
 
-
-@router.post("/verify")
-async def verify_user(email_code: EmailCode):
-    stored_code = db.codes.find_one({"email": email_code.email})
-    if not stored_code or stored_code["code"] != email_code.code:
-        raise HTTPException(status_code=400, detail="Invalid verification code")
-    db.users.update_one({"email": email_code.email}, {"$set": {"verified": True}})
-    db.codes.delete_one({"email": email_code.email})
-    return {"message": "User verified successfully"}
-
-
-@router.post("/reset-password")
-async def reset_password(email_code: EmailCode, new_password: str):
-    stored_code = db.codes.find_one({"email": email_code.email})
-    if not stored_code or stored_code["code"] != email_code.code:
-        raise HTTPException(status_code=400, detail="Invalid verification code")
-
-    # If code is valid, update user's password
-    hashed_password = get_password_hash(new_password)
-    db.users.update_one({"email": email_code.email}, {"$set": {"hashed_password": hashed_password}})
-    # Remove code from the database after password reset
-    db.codes.delete_one({"email": email_code.email})
-    return {"message": "Password reset successfully"}
+    return {
+        "user": {
+            "firstname": user_in_db["firstname"],
+            "lastname": user_in_db["lastname"],
+            "email": user_in_db["email"],
+            "phone": user_in_db["phone"],  
+        },
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+    }
