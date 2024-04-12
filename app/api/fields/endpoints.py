@@ -16,6 +16,18 @@ async def get_fields():
     fields = list(db.fields.find())
     return fields
 
+
+@router.get("/mine")
+async def get_fields_for_logged_in_user():
+    fields = list(db.fields.find())
+    return fields
+
+
+@router.get("/user/:id")
+async def get_fields_for_user_by_id(id:str):
+    fields = list(db.fields.find())
+    return fields
+
 @router.get("/{field_id}")
 async def get_field(field_id: str):
     field = db.fields.find_one({"_id": field_id})

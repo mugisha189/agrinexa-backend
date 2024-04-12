@@ -1,0 +1,7 @@
+from jinja2 import Environment, FileSystemLoader
+import os
+templates_dir = os.path.join(os.path.dirname(__file__), "../templates")
+env = Environment(loader=FileSystemLoader(templates_dir))
+def render_template(template_name, **context):
+    template = env.get_template(template_name)
+    return template.render(context)

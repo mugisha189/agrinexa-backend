@@ -1,6 +1,6 @@
-from typing import List
+from typing import List, Optional
 from fastapi import Depends, HTTPException, status
-import jwt
+from jose import JWTError, jwt
 from . import settings
 
 ALGORITHM = "HS256"
@@ -20,3 +20,18 @@ async def get_current_user_roles(token: str = Depends(settings.oauth2_scheme)) -
         return roles
     except JWTError:
         raise credentials_exception
+
+
+def has_role(*allowed_roles: str):
+    async def _has_role(roles: List[str] = Depends(get_current_user_roles)):
+        if not allowed_roles:
+            return  # No roles specified means any role is allowed
+        for role in allowed_roles:
+            if role in roles:
+                return  # User has at least one allowed role
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Insufficient permissions. Required roles: " + ", ".join(allowed_roles),
+        )
+
+    return _has_role
