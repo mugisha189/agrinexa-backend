@@ -1,8 +1,6 @@
 from pymongo import MongoClient
-from decouple import config
+from app.settings import MONGODB_URL
 
-MONGODB_URI = config("MONGODB_URI")
-
-client = MongoClient(MONGODB_URI)
+client = MongoClient(MONGODB_URL)
 
 db = client.get_default_database()

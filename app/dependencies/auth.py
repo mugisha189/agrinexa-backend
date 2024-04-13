@@ -1,37 +1,47 @@
-from typing import List, Optional
+from typing import Optional
 from fastapi import Depends, HTTPException, status
-from jose import JWTError, jwt
-from . import settings
+from app.settings import authScheme
+from app.db import db
+from app.utils import decode_token
+from app.api.auth import User
+from bson import ObjectId
 
-ALGORITHM = "HS256"
 
 
-async def get_current_user_roles(token: str = Depends(settings.oauth2_scheme)) -> List[str]:
+
+
+
+
+async def get_current_user(token: str = Depends(authScheme)):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
+        detail="Invalid Token",
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
-        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[ALGORITHM])
-        roles = payload.get("roles")
-        if roles is None:
+        payload = decode_token(dict(token)["credentials"])
+        user_id = payload["id"]
+        if user_id is None:
             raise credentials_exception
-        return roles
-    except JWTError:
+        user =db.users.find_one({"_id": ObjectId(user_id)})
+        if user is None:
+            raise credentials_exception
+        return user
+    except Exception as e:
+        print("get current user errorr")
+        print(e)
         raise credentials_exception
 
 
-def has_role(*allowed_roles: str):
-    async def _has_role(roles: List[str] = Depends(get_current_user_roles)):
-        if not allowed_roles:
-            return  # No roles specified means any role is allowed
-        for role in allowed_roles:
-            if role in roles:
-                return  # User has at least one allowed role
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Insufficient permissions. Required roles: " + ", ".join(allowed_roles),
-        )
+class AuthRole:
 
-    return _has_role
+    def __init__(self, roles: list[str]) -> None:
+        self.roles = roles
+
+    async def __call__(self, user: User= Depends(get_current_user)) -> bool:
+        if(user["role"] not in self.roles):
+            raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail='Permissions'
+                )
+        return True

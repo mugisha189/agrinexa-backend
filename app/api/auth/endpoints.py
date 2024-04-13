@@ -50,7 +50,8 @@ async def login(cred: LoginModel):
                 "lastname": user["lastname"],
                 "email": user["email"],
                 "phone": user["phone"],
-                "location": user["location"]
+                "location": user["location"],
+                "role":user["role"]
             },
             "access_token": access_token,
             "refresh_token": refresh_token,
@@ -102,7 +103,8 @@ async def register_user(user: RegisterUserModel):
             "lastname": user_in_db["lastname"],
             "email": user_in_db["email"],
             "phone": user_in_db["phone"],
-            "location": user_in_db["location"]
+            "location": user_in_db["location"],
+            "role":user["role"]
         },
         "access_token": access_token,
         "refresh_token": refresh_token,

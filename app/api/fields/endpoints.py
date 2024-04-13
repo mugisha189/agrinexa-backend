@@ -1,18 +1,21 @@
 
 from fastapi import APIRouter, Depends, HTTPException
 from app.api.fields.models import Field
+from app.api.auth import User
 from app.db import db
+from app.dependencies import AuthRole
 
 router = APIRouter()
 
 @router.post("/")
-async def create_field(field: Field):
+async def create_field(field: Field,authorize:bool = Depends(AuthRole(roles="Admin"))):
     new_field = field.dict()
     field_id = db.fields.insert_one(new_field).inserted_id
     return {"id": str(field_id), **new_field}
 
+
 @router.get("/")
-async def get_fields():
+async def get_fields(authorize:bool = Depends(AuthRole(roles="Admin"))):
     fields = list(db.fields.find())
     return fields
 
