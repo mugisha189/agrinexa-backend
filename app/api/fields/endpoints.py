@@ -1,9 +1,10 @@
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException,status
 from app.api.fields.models import Field
 from app.api.auth import User
 from app.db import db
-from app.dependencies import AuthRole
+from bson import ObjectId
+from app.dependencies import AuthRole,get_current_user
 
 router = APIRouter()
 
@@ -21,9 +22,15 @@ async def get_fields(authorize:bool = Depends(AuthRole(roles="Admin"))):
 
 
 @router.get("/mine")
-async def get_fields_for_logged_in_user():
-    fields = list(db.fields.find())
-    return fields
+async def get_fields_for_logged_in_user(authorize:bool = Depends(AuthRole(roles="User")),user: User = Depends(get_current_user)):
+    try:
+        fields = list(db.fields.find({"owner": ObjectId(user["_id"])}))
+        return fields
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An error occurred while retrieving fields.",
+        )
 
 
 @router.get("/user/:id")

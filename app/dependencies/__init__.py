@@ -1,1 +1,1 @@
-from .auth import AuthRole
+from .auth import AuthRole,get_current_user
