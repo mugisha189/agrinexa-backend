@@ -71,7 +71,7 @@ async def register_user(user: RegisterUserModel):
 
     user_data = user.dict()
     user_data["password"] = get_password_hash(user_data.pop("password"))
-    user_data["role"] = Role.Admin
+    user_data["role"] = Role.User
     user_data["emailVerified"] = False
     user_data["phoneVerified"] = False
 
