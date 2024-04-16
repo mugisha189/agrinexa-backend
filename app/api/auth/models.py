@@ -1,36 +1,17 @@
 from pydantic import BaseModel, EmailStr
 from typing import Optional
-from enum import Enum
+from app.api.users.models import Role
 
 
-class Role(str, Enum):
-    User = "User"
-    Admin = "Admin"
-
-
-class User(BaseModel):
-    firstname: str
-    lastname: str
-    email: Optional[EmailStr] = None
-    phone: Optional[str] = None
-    password: str
-    location: str
-    role: Role
-    emailVerified: Optional[bool] = False
-    phoneVerified: Optional[bool] = False
 
 
 class RegisterUserModel(BaseModel):
-    firstname: str
-    lastname: str
+    firstName:str
+    lastName:str
     email: Optional[EmailStr] = None
     phone: Optional[str] = None
     password: str
-    location: str
 
-
-class UserInDB(User):
-    id: str
 
 
 class EmailCode(BaseModel):
@@ -49,14 +30,24 @@ class ForgotPasswordModel(BaseModel):
 
 class ForgotPasswordResponseModel(BaseModel):
     message: str
+    
+    
+class ResetPasswordModel(BaseModel):
+    email:EmailStr
+    code:str
+    password:str
+    
+    
+class VerifyAccountModel(BaseModel):
+    email:EmailStr
+    code:str
 
 
 class PartialUser(BaseModel):
-    firstname: str
-    lastname: str
+    firstName:str
+    lastName:str
     email: Optional[EmailStr] = None
     phone: Optional[str] = None
-    location: str
     role: Role
 
 
@@ -65,3 +56,6 @@ class AuthResponseModel(BaseModel):
     refresh_token: str
     message: Optional[str] = None
     user: PartialUser
+    
+class AuthResponseModel2(BaseModel):
+    message: str

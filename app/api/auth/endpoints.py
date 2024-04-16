@@ -1,7 +1,8 @@
 from fastapi import APIRouter, HTTPException, Depends, status
 from .models import LoginModel, AuthResponseModel, RegisterUserModel, ForgotPasswordModel, \
-    ForgotPasswordResponseModel, Role
-from app.utils import send_email, render_template,create_access_token,create_refresh_token,generate_verification_code,store_verification_code,verify_password, get_password_hash
+    VerifyAccountModel,ResetPasswordModel,AuthResponseModel2
+from app.api.users.models import Role
+from app.utils import send_email, render_template,create_access_token,create_refresh_token,generate_verification_code,store_verification_code,verify_password, get_password_hash,verify_verification_code,delete_verification_code
 from app.db import db
 
 router = APIRouter()
@@ -22,7 +23,7 @@ async def login(cred: LoginModel):
     creds = dict(cred)
     user = authenticate_user(creds["email"], creds["password"])
     if not user:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User with specified email not found")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect username or password")
     try:
 
 
@@ -46,11 +47,10 @@ async def login(cred: LoginModel):
 
         return {
             "user": {
-                "firstname": user["firstname"],
-                "lastname": user["lastname"],
+                "firstName": user["firstName"],
+                "lastName": user["lastName"],
                 "email": user["email"],
                 "phone": user["phone"],
-                "location": user["location"],
                 "role":user["role"]
             },
             "access_token": access_token,
@@ -68,13 +68,13 @@ async def register_user(user: RegisterUserModel):
     if existing_user:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                             detail="User with this email or phone already exists")
-
     user_data = user.dict()
     user_data["password"] = get_password_hash(user_data.pop("password"))
     user_data["role"] = Role.User
     user_data["emailVerified"] = False
+    user_data["balance"] = 0.0  
+    user_data["history"] = [] 
     user_data["phoneVerified"] = False
-
     try:
         user_id = db.users.insert_one(user_data).inserted_id
         user_in_db = db.users.find_one({"_id": user_id})
@@ -100,11 +100,10 @@ async def register_user(user: RegisterUserModel):
     )
     return {
         "user": {
-            "firstname": user_in_db["firstname"],
-            "lastname": user_in_db["lastname"],
+            "firstName": user["firstName"],
+            "lastName": user["lastName"],
             "email": user_in_db["email"],
             "phone": user_in_db["phone"],
-            "location": user_in_db["location"],
             "role":user_in_db["role"]
         },
         "access_token": access_token,
@@ -113,7 +112,7 @@ async def register_user(user: RegisterUserModel):
     }
 
 
-@router.post("/forgot-password", response_model=ForgotPasswordResponseModel, status_code=status.HTTP_200_OK)
+@router.post("/forgot-password", response_model=AuthResponseModel2, status_code=status.HTTP_200_OK)
 async def forgot_password(cred: ForgotPasswordModel):
     creds = dict(cred)
     user = db.users.find_one({"email": creds["email"]})
@@ -121,7 +120,6 @@ async def forgot_password(cred: ForgotPasswordModel):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail="Oops! We couldn't find a user with the specified email. Please double-check your email or consider signing up.")
     verification_code = generate_verification_code()
-
     try:
         await send_email([creds["email"]], "Forgot Password - Verification Code",
                          render_template("forgot-password.html", verification_code=verification_code))
@@ -133,3 +131,51 @@ async def forgot_password(cred: ForgotPasswordModel):
     except Exception as e:
         print(e)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
+
+
+
+@router.post("/verify-account", response_model=AuthResponseModel2, status_code=status.HTTP_200_OK, responses={
+    404: {"description": "User with the specified email not found"},
+    401: {"description": "Invalid verification code"},
+    500: {"description": "Internal server error"}
+})
+async def verify_account(cred: VerifyAccountModel):
+    try:
+        user = db.users.find_one({"email": cred.email})
+        if not user:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                                detail="User with the specified email not found. Please double-check your email or consider signing up.")
+        if not verify_verification_code(cred.email, cred.code):
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+                                detail="Invalid verification code. Please double-check your email.")
+        db.users.update_one({"email": user["email"]}, {"$set": {"emailVerified": True}})
+        return {"message": "Account verified successfully"}
+    except Exception as e:
+        print(e)
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                            detail="Internal server error. Please try again later.")
+        
+        
+        
+
+@router.post("/reset-password", response_model=AuthResponseModel2, status_code=status.HTTP_200_OK, responses={
+    404: {"description": "User with the specified email not found"},
+    401: {"description": "Invalid verification code"},
+    500: {"description": "Internal server error"}
+})
+async def reset_password(cred: ResetPasswordModel):
+    try:
+        user = db.users.find_one({"email": cred.email})
+        if not user:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                                detail="User with the specified email not found. Please double-check your email or consider signing up.")
+        if not verify_verification_code(cred.email, cred.code):
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+                                detail="Invalid verification code. Please double-check your email.")
+        db.users.update_one({"email": cred.email}, {"$set": {"password": get_password_hash(cred.password)}})
+        delete_verification_code(cred.email)
+        return {"message": "Password reset successful. You can now log in with your new password."}
+    except Exception as e:
+        print(e)
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                            detail="Internal server error. Please try again later.")
