@@ -10,12 +10,9 @@ class Role(str, Enum):
 
 
 class User(BaseModel):
-    firstName: str
-    lastName: str
+    name: str
     email: Optional[EmailStr] = None
     phone: Optional[str] = None
     role: Role
-    balance: float
-    history: List[dict] = []
     emailVerified: Optional[bool] = False
     phoneVerified: Optional[bool] = False

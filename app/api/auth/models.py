@@ -6,8 +6,7 @@ from app.api.users.models import Role
 
 
 class RegisterUserModel(BaseModel):
-    firstName:str
-    lastName:str
+    name:str
     email: Optional[EmailStr] = None
     phone: Optional[str] = None
     password: str
@@ -44,8 +43,7 @@ class VerifyAccountModel(BaseModel):
 
 
 class PartialUser(BaseModel):
-    firstName:str
-    lastName:str
+    name:str
     email: Optional[EmailStr] = None
     phone: Optional[str] = None
     role: Role
