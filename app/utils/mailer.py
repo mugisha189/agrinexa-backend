@@ -5,6 +5,8 @@ from typing import List
 from decouple import config
 import os
 
+
+
 conf = ConnectionConfig(
     MAIL_USERNAME=config("MAIL_USERNAME"),
     MAIL_PASSWORD=config("MAIL_PASSWORD"),
@@ -21,7 +23,6 @@ fast_mail = FastMail(conf)
 async def send_email(recipients: List[EmailStr], subject: str, body: str, template=None):
     if template:
         body = template
-
     message = MessageSchema(
         subject=subject,
         recipients=recipients,

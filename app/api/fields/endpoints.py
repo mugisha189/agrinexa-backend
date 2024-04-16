@@ -1,7 +1,7 @@
 
 from fastapi import APIRouter, Depends, HTTPException,status
 from app.api.fields.models import Field
-from app.api.auth import User
+from app.api.users.models import User
 from app.db import db
 from bson import ObjectId
 from app.dependencies import AuthRole,get_current_user

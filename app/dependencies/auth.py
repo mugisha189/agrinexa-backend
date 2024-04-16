@@ -1,9 +1,8 @@
-from typing import Optional
 from fastapi import Depends, HTTPException, status
 from app.settings import authScheme
 from app.db import db
 from app.utils import decode_token
-from app.api.auth import User
+from app.api.users.models import User
 from bson import ObjectId
 
 

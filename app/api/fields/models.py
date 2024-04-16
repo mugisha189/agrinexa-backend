@@ -1,6 +1,6 @@
 # app/api/fields/models.py
 from pydantic import BaseModel
-from  app.api.auth import User
+from  app.api.users.models import User
 
 class Field(BaseModel):
     name: str
