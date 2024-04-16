@@ -22,7 +22,7 @@ async def login(cred: LoginModel):
     creds = dict(cred)
     user = authenticate_user(creds["email"], creds["password"])
     if not user:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect username or password")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User with specified email not found")
     try:
 
 
@@ -105,7 +105,7 @@ async def register_user(user: RegisterUserModel):
             "email": user_in_db["email"],
             "phone": user_in_db["phone"],
             "location": user_in_db["location"],
-            "role":user["role"]
+            "role":user_in_db["role"]
         },
         "access_token": access_token,
         "refresh_token": refresh_token,
