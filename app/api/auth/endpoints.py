@@ -47,8 +47,7 @@ async def login(cred: LoginModel):
 
         return {
             "user": {
-                "firstName": user["firstName"],
-                "lastName": user["lastName"],
+                "name": user["name"],
                 "email": user["email"],
                 "phone": user["phone"],
                 "role":user["role"]
@@ -100,15 +99,14 @@ async def register_user(user: RegisterUserModel):
     )
     return {
         "user": {
-            "firstName": user["firstName"],
-            "lastName": user["lastName"],
+            "name": user["name"],
             "email": user_in_db["email"],
             "phone": user_in_db["phone"],
             "role":user_in_db["role"]
         },
         "access_token": access_token,
         "refresh_token": refresh_token,
-        "message": "An email has been sent to your account with a verification code. Please check your inbox."
+        "message": "Account created"
     }
 
 
