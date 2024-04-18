@@ -4,4 +4,4 @@ from . import endpoints
 
 router = APIRouter()
 
-router.include_router(endpoints.router, prefix="/pests",tags=["Pests"])
+router.include_router(endpoints.router, prefix="/pests",tags=["Pests And Disease"])

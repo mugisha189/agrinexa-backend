@@ -63,7 +63,10 @@ async def login(cred: LoginModel):
 
 @router.post("/register", response_model=AuthResponseModel, status_code=status.HTTP_201_CREATED)
 async def register_user(user: RegisterUserModel):
-    existing_user = db.users.find_one({"$or": [{"email": user.email}, {"phone": user.phone}]})
+    if user.email and len(user.email) > 0:
+        existing_user = db.users.find_one({"email": user.email})
+    elif user.phone and len(user.phone) > 0:
+        existing_user = db.users.find_one({"phone": user.phone})
     if existing_user:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                             detail="User with this email or phone already exists")
