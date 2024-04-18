@@ -5,6 +5,7 @@ from app.api.users.models import User
 from app.db import db
 from bson import ObjectId
 from app.dependencies import AuthRole,get_current_user
+from app.utils import get_thingspeak_data
 
 router = APIRouter()
 
@@ -81,13 +82,17 @@ async def get_fields_for_user_by_id(user_id: str,
             })
 async def get_field(field_id: str,authorize:bool = Depends(AuthRole(roles=["Admin","User"]))):
     try:
-        field = db.fields.find_one({"_id": field_id})
+        field = db.fields.find_one({"_id": ObjectId(field_id)})
         if field:
-            return field
+            field['_id'] = str(field['_id'])
+            data = get_thingspeak_data()
+            print(data)
+            return {"field":field,"data":data}
         else:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Field not found")
+            return HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Field not found")
     except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        print(e)
+        return HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                             detail="An error occurred while retrieving the field.")
 
 

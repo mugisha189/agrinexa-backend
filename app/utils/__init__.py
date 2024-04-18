@@ -3,3 +3,4 @@ from .mailer import send_email
 from .verification_code import  store_verification_code,generate_verification_code,delete_verification_code,verify_verification_code
 from .auth import create_access_token,create_refresh_token,decode_token
 from .hasher import get_password_hash,verify_password
+from .thingSpeak import get_thingspeak_data
