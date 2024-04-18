@@ -71,35 +71,29 @@ async def register_user(user: RegisterUserModel):
     user_data["password"] = get_password_hash(user_data.pop("password"))
     user_data["role"] = Role.User
     user_data["emailVerified"] = False
-    user_data["balance"] = 0.0  
-    user_data["history"] = [] 
     user_data["phoneVerified"] = False
     try:
         user_id = db.users.insert_one(user_data).inserted_id
         user_in_db = db.users.find_one({"_id": user_id})
-    except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to register user")
-
-    access_token_data = {
+        access_token_data = {
         "id": str(user_in_db["_id"]),
         "email": user_in_db["email"],
         "phone": user_in_db["phone"]
-    }
-    access_token = create_access_token(
-        data=access_token_data,
-    )
-
-    refresh_token_data = {
+        }
+        access_token = create_access_token(
+            data=access_token_data,
+        )
+        refresh_token_data = {
         "id": str(user_in_db["_id"]),
         "email": user_in_db["email"],
         "phone": user_in_db["phone"]
-    }
-    refresh_token = create_refresh_token(
+        }
+        refresh_token = create_refresh_token(
         data=refresh_token_data,
-    )
-    return {
+        )
+        return {
         "user": {
-            "name": user["name"],
+            "name": user_in_db["name"],
             "email": user_in_db["email"],
             "phone": user_in_db["phone"],
             "role":user_in_db["role"]
@@ -107,7 +101,9 @@ async def register_user(user: RegisterUserModel):
         "access_token": access_token,
         "refresh_token": refresh_token,
         "message": "Account created"
-    }
+        }
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to register user")
 
 
 @router.post("/forgot-password", response_model=AuthResponseModel2, status_code=status.HTTP_200_OK)
