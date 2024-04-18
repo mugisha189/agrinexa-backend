@@ -13,7 +13,7 @@ Jinja2~=3.1.3
 datetime
 bcrypt == 4.1.2
 requests
-opencv-python1
+opencv-python ~=4.9
 numpy
 tensorflow
 python-multipart
