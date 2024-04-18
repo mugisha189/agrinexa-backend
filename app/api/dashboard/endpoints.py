@@ -27,7 +27,7 @@ from .models import DashboardModel
 async def get_dashboard_for_logged_in_user(user: User = Depends(get_current_user)) -> User:
     try:
         user_data = db.users.find_one({"_id": user["_id"]})
-        user_fields = db.fields.find({"user_id":user["_id"]})
+        user_fields = db.fields.find({"user_id":str(user["_id"])})
         if user_data:
             return {"user":user_data,"fields":user_fields}
         else:

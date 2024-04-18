@@ -4,7 +4,14 @@ from  app.api.users.models import User
 
 class Field(BaseModel):
     name: str
-    location: str
+    lat: float
+    long: float
     size: float
-    sensorId:str
-    owner:User
+    user_id:str
+    
+
+class CreateField(BaseModel):
+    name: str
+    lat: float
+    long: float
+    size: float

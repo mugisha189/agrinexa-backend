@@ -1,6 +1,6 @@
 
 from fastapi import APIRouter, Depends, HTTPException,status
-from app.api.fields.models import Field
+from app.api.fields.models import Field,CreateField
 from app.api.users.models import User
 from app.db import db
 from bson import ObjectId
@@ -8,11 +8,21 @@ from app.dependencies import AuthRole,get_current_user
 
 router = APIRouter()
 
-@router.post("/")
-async def create_field(field: Field,authorize:bool = Depends(AuthRole(roles="Admin"))):
-    new_field = field.dict()
-    field_id = db.fields.insert_one(new_field).inserted_id
-    return {"id": str(field_id), **new_field}
+@router.post("/",summary="Create a field by the admin",
+            response_model=dict,
+            responses={
+                201: {"description": "Field created successfully."},
+                500: {"description": "Internal Server Error."},
+            })
+async def create_field(field: CreateField,user_id:str,authorize:bool = Depends(AuthRole(roles="Admin"))):
+    try:
+        new_field = field.dict()
+        new_field["user_id"] = user_id
+        db.fields.insert_one(new_field)
+        return {"message":"Field created successfully"}
+    except Exception as e:
+        print(e)
+        raise HTTPException(status_code=500, detail="Internal Server Error")
 
 
 @router.get("/")
