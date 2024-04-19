@@ -99,6 +99,9 @@ async def get_field(field_id: str,authorize:bool = Depends(AuthRole(roles=["Admi
             field['_id'] = str(field['_id'])
             data = get_thingspeak_data()
             print(data)
+            data["moisture"] = data["field1"]
+            data["temperature"] = data["field2"]
+            data["humidity"] = data["field3"]
             return {"field":field,"data":data}
         else:
             return HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Field not found")
