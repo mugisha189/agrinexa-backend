@@ -28,8 +28,12 @@ async def get_dashboard_for_logged_in_user(user: User = Depends(get_current_user
     try:
         user_data = db.users.find_one({"_id": user["_id"]})
         user_fields = db.fields.find({"user_id":str(user["_id"])})
+        fields_with_ids = []
+        for field in user_fields:
+            field["id"] = str(field["_id"]) # Convert ObjectId to string
+            fields_with_ids.append(field)
         if user_data:
-            return {"user":user_data,"fields":user_fields}
+            return {"user":user_data,"fields":fields_with_ids}
         else:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="User data not found")
     except HTTPException as e:
