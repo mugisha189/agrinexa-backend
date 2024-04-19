@@ -29,14 +29,22 @@ async def create_field(field: CreateField,user_id:str,authorize:bool = Depends(A
 @router.get("/")
 async def get_fields(authorize:bool = Depends(AuthRole(roles="Admin"))):
     fields = list(db.fields.find())
-    return fields
+    fields_with_ids = []
+    for field in fields:
+        field["id"] = str(field["_id"]) 
+        fields_with_ids.append(field)
+    return fields_with_ids
 
 
 @router.get("/mine")
 async def get_fields_for_logged_in_user(authorize:bool = Depends(AuthRole(roles="User")),user: User = Depends(get_current_user)):
     try:
         fields = list(db.fields.find({"owner": ObjectId(user["_id"])}))
-        return fields
+        fields_with_ids = []
+        for field in fields:
+            field["id"] = str(field["_id"]) 
+            fields_with_ids.append(field)
+        return fields_with_ids
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -63,7 +71,11 @@ async def get_fields_for_user_by_id(user_id: str,
                 detail="Invalid user ID provided."
             )
         fields = list(db.fields.find({"owner": ObjectId(user_id)}))
-        return fields
+        fields_with_ids = []
+        for field in fields:
+            field["id"] = str(field["_id"]) 
+            fields_with_ids.append(field)
+        return fields_with_ids
     except HTTPException as e:
         raise e
     except Exception as e:
