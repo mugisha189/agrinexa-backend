@@ -1,7 +1,8 @@
 # app/api/pests/endpoints.py
-from fastapi import APIRouter, HTTPException,UploadFile, File
+from fastapi import APIRouter, HTTPException,UploadFile, File,status
 from app.api.pests.models import Pest
 from app.db import db
+from app.utils import process_image
 
 router = APIRouter()
 
@@ -19,7 +20,7 @@ async def detect_pest(image: UploadFile = File(...)):
         processed_data = process_image(image)
         return {"data": processed_data}
     except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        return HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                             detail="An error occurred while creating the pest entry.")
 
 @router.get("/", tags=["Pests"])
