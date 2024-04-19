@@ -4,6 +4,7 @@ from app.api.users.models import User,Role
 from app.db import db
 from bson import ObjectId
 from app.dependencies import AuthRole,get_current_user
+from app.utils import get_thingspeak_data
 
 router = APIRouter()
 
@@ -31,6 +32,11 @@ async def get_dashboard_for_logged_in_user(user: User = Depends(get_current_user
         fields_with_ids = []
         for field in user_fields:
             field["id"] = str(field["_id"]) 
+            data = get_thingspeak_data()
+            print(data)
+            field["moisture"] = data[0]["field1"]
+            field["temperature"] = data[0]["field2"]
+            field["humidity"] = data[0]["field3"]
             fields_with_ids.append(field)
         if user_data:
             return {"user":user_data,"fields":fields_with_ids}

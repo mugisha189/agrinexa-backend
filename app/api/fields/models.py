@@ -9,6 +9,9 @@ class Field(BaseModel):
     long: float
     size: float
     user_id:str
+    moisture:float
+    temperature:float
+    humidity:float
     
 
 class CreateField(BaseModel):
