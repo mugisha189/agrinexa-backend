@@ -30,7 +30,7 @@ async def get_dashboard_for_logged_in_user(user: User = Depends(get_current_user
         user_fields = db.fields.find({"user_id":str(user["_id"])})
         fields_with_ids = []
         for field in user_fields:
-            field["id"] = str(field["_id"]) # Convert ObjectId to string
+            field["id"] = str(field["_id"]) 
             fields_with_ids.append(field)
         if user_data:
             return {"user":user_data,"fields":fields_with_ids}
