@@ -57,3 +57,6 @@ class AuthResponseModel(BaseModel):
     
 class AuthResponseModel2(BaseModel):
     message: str
+    access_token: Optional[str]
+    refresh_token: Optional[str]
+    

@@ -2,9 +2,9 @@ from fastapi import APIRouter, HTTPException, Depends, status
 from .models import LoginModel, AuthResponseModel, RegisterUserModel, ForgotPasswordModel, \
     VerifyAccountModel,ResetPasswordModel,AuthResponseModel2
 from app.api.users.models import Role
-from app.utils import send_email, render_template,create_access_token,create_refresh_token,generate_verification_code,store_verification_code,verify_password, get_password_hash,verify_verification_code,delete_verification_code
+from app.utils import send_email, render_template,create_access_token,create_refresh_token,generate_verification_code,store_verification_code,verify_password, get_password_hash,verify_verification_code,delete_verification_code,decode_refresh_token
 from app.db import db
-
+from app.settings import authScheme
 router = APIRouter()
 
 
@@ -172,6 +172,29 @@ async def reset_password(cred: ResetPasswordModel):
         db.users.update_one({"email": cred.email}, {"$set": {"password": get_password_hash(cred.password)}})
         delete_verification_code(cred.email)
         return {"message": "Password reset successful. You can now log in with your new password."}
+    except Exception as e:
+        print(e)
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                            detail="Internal server error. Please try again later.")
+        
+        
+        
+
+@router.post("/verify-token", response_model=AuthResponseModel2, status_code=status.HTTP_200_OK, responses={
+    401: {"description": "Invalid Token"},
+    500: {"description": "Internal server error"}
+})
+async def verify_token(token: str = Depends(authScheme) ):
+    try:
+        user = decode_refresh_token(token)
+        if not user:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+                                detail="Invalid refresh token. Please login again to get a new refresh token.")
+        new_access_token = create_access_token(user)  
+        new_refresh_token = create_refresh_token(user)  
+        return {"access_token": new_access_token, "refresh_token": new_refresh_token}
+    except HTTPException as e:
+        raise e
     except Exception as e:
         print(e)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
