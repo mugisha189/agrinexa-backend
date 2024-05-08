@@ -88,7 +88,7 @@ async def get_fields_for_user_by_id(user_id: str,
             summary="Get a field by ID",
             description="Retrieves a field by its ID.",
             responses={
-                200: {"description": "Field retrieved successfully.", "model": Field},
+                200: {"description": "Field retrieved successfully."},
                 404: {"description": "Field not found."},
                 500: {"description": "Internal Server Error."},
             })
