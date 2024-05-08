@@ -92,23 +92,28 @@ async def get_fields_for_user_by_id(user_id: str,
                 404: {"description": "Field not found."},
                 500: {"description": "Internal Server Error."},
             })
-async def get_field(field_id: str,authorize:bool = Depends(AuthRole(roles=["Admin","User"]))):
+async def get_field(field_id: str, authorize: bool = Depends(AuthRole(roles=["Admin", "User"]))):
     try:
         field = db.fields.find_one({"_id": ObjectId(field_id)})
         if field:
-            field['_id'] = str(field['_id'])
+            field['id'] = str(field['_id'])
             data = get_thingspeak_data()
             print(data)
-            data["moisture"] = data[0]["field1"]
-            data["temperature"] = data[0]["field2"]
-            data["humidity"] = data[0]["field3"]
-            return {"field":field,"data":data}
+            if data and isinstance(data, list) and len(data) > 0:
+                data = data[0]
+                field["moisture"] = data.get("field1", None)
+                field["temperature"] = data.get("field2", None)
+                field["humidity"] = data.get("field3", None)
+                return {"field": field}
+            else:
+                return HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Data not available")
         else:
             return HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Field not found")
     except Exception as e:
         print(e)
         return HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                             detail="An error occurred while retrieving the field.")
+
 
 
 @router.put("/{field_id}", 

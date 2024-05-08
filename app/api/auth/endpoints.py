@@ -186,13 +186,14 @@ async def reset_password(cred: ResetPasswordModel):
 })
 async def verify_token(token: str = Depends(authScheme) ):
     try:
-        user = decode_refresh_token(token)
+        user = decode_refresh_token(dict(token)["credentials"])
+        print(user)
         if not user:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
                                 detail="Invalid refresh token. Please login again to get a new refresh token.")
         new_access_token = create_access_token(user)  
         new_refresh_token = create_refresh_token(user)  
-        return {"access_token": new_access_token, "refresh_token": new_refresh_token}
+        return { "message":"Logged In","access_token": new_access_token,"refresh_token": new_refresh_token}
     except HTTPException as e:
         raise e
     except Exception as e:
