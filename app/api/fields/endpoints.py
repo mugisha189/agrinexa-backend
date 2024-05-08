@@ -96,7 +96,7 @@ async def get_field(field_id: str, authorize: bool = Depends(AuthRole(roles=["Ad
     try:
         field = db.fields.find_one({"_id": ObjectId(field_id)})
         if field:
-            field['id'] = str(field['_id'])
+            field['_id'] = str(field['_id'])
             data = get_thingspeak_data()
             print(data)
             if data and isinstance(data, list) and len(data) > 0:
