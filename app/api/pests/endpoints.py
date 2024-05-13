@@ -17,9 +17,11 @@ router = APIRouter()
 async def detect_pest(image: UploadFile = File(...)):
     try:
         # Process the image using the provided model
-        processed_data = process_image(image)
+        print("Going to process")
+        processed_data = await process_image(image)
         return {"data": processed_data}
     except Exception as e:
+        print(e)
         return HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                             detail="An error occurred while creating the pest entry.")
 
