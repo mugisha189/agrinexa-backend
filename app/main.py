@@ -1,7 +1,7 @@
 # app/main.py
 from fastapi import FastAPI
 from app.db import db
-from app.api import auth,fields,plantings,harvest,nutrients,weather,pests,users,dashboard
+from app.api import auth,fields,plantings,harvest,nutrients,weather,pests,users,dashboard,community
 app = FastAPI(    title="Agrinexa",
     description="This is the documentation for Agrinexa, a platform for tracking fields and nutrients in agriculture. Backend developed by Mugisha Yves",)
 @app.head("/")
@@ -11,6 +11,7 @@ app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(dashboard.router)
 app.include_router(fields.router)
+app.include_router(community.router)
 app.include_router(pests.router)
 app.include_router(plantings.router)
 app.include_router(harvest.router)

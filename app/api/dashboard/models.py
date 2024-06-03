@@ -6,3 +6,4 @@ from typing import List
 class DashboardModel(BaseModel):
     user: User
     fields: List[Field]
+    tips: List[dict]

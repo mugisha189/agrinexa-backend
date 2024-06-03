@@ -16,3 +16,4 @@ class User(BaseModel):
     role: Role
     emailVerified: Optional[bool] = False
     phoneVerified: Optional[bool] = False
+    profile:str
