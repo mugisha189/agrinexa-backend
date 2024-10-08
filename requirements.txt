@@ -16,4 +16,6 @@ requests
 opencv-python ~=4.9
 numpy
 tensorflow
+keras
 python-multipart
+pillow

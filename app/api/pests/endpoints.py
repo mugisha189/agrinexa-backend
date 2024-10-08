@@ -19,6 +19,8 @@ async def detect_pest(image: UploadFile = File(...)):
         # Process the image using the provided model
         print("Going to process")
         processed_data = await process_image(image)
+        print("The processed data")
+        print(processed_data)
         return {"data": processed_data}
     except Exception as e:
         print(e)

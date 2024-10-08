@@ -51,6 +51,7 @@ AGRICULTURE_TIPS = [
         500: {"description": "Internal Server Error."},
     },
 )
+
 async def get_dashboard_for_logged_in_user(user: User = Depends(get_current_user)) -> dict[str, any]:
     try:
         user_data = db.users.find_one({"_id": user["_id"]})

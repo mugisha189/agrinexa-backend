@@ -1,0 +1,5 @@
+0 Gray mold 
+1 Leaf spot 
+2 Powdery mildew
+3 Rusty leaves
+4 Healthy plant
