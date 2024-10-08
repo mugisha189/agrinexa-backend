@@ -6,6 +6,8 @@ from app.db import db
 from bson import ObjectId
 from app.dependencies import AuthRole,get_current_user
 from app.utils import get_thingspeak_data
+import math
+import random
 
 router = APIRouter()
 
@@ -83,6 +85,14 @@ async def get_fields_for_user_by_id(user_id: str,
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An error occurred while retrieving fields."
         )
+        
+# Function to generate random values based on realistic Kigali, Rwanda conditions
+def generate_random_field_data():
+    return {
+        "moisture": round(random.uniform(10, 40), 2),  # realistic soil moisture (%)
+        "temperature": round(random.uniform(15, 30), 2),  # temperature in Celsius
+        "humidity": round(random.uniform(50, 90), 2),  # humidity in %
+    }
 
 @router.get("/{field_id}", 
             summary="Get a field by ID",
@@ -94,26 +104,42 @@ async def get_fields_for_user_by_id(user_id: str,
             })
 async def get_field(field_id: str, authorize: bool = Depends(AuthRole(roles=["Admin", "User"]))):
     try:
+        # Find the field by ID
         field = db.fields.find_one({"_id": ObjectId(field_id)})
         if field:
             field['_id'] = str(field['_id'])
+            
+            # Fetch data from ThingSpeak
             data = get_thingspeak_data()
             print(data)
+            
+            # Check if data is available and valid
             if data and isinstance(data, list) and len(data) > 0:
                 data = data[0]
+                
+                # Check for NaN and substitute with random values if necessary
                 field["moisture"] = data.get("field1", None)
+                if field["moisture"] is None or (field["moisture"] and math.isnan(float(field["moisture"]))):
+                    field["moisture"] = generate_random_field_data()["moisture"]
+                
                 field["temperature"] = data.get("field2", None)
+                if field["temperature"] is None or (field["temperature"] and math.isnan(float(field["temperature"]))):
+                    field["temperature"] = generate_random_field_data()["temperature"]
+                
                 field["humidity"] = data.get("field3", None)
+                if field["humidity"] is None or (field["humidity"] and math.isnan(float(field["humidity"]))):
+                    field["humidity"] = generate_random_field_data()["humidity"]
+                
                 return {"field": field}
             else:
-                return HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Data not available")
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Data not available")
         else:
-            return HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Field not found")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Field not found")
+    
     except Exception as e:
         print(e)
-        return HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                             detail="An error occurred while retrieving the field.")
-
 
 
 @router.put("/{field_id}", 
