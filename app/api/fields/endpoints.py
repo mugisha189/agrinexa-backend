@@ -90,8 +90,8 @@ async def get_fields_for_user_by_id(user_id: str,
 def generate_random_field_data():
     return {
         "moisture": round(random.uniform(10, 40), 2),  # realistic soil moisture (%)
-        "temperature": round(random.uniform(15, 30), 2),  # temperature in Celsius
-        "humidity": round(random.uniform(50, 90), 2),  # humidity in %
+        "temperature": round(random.uniform(21, 22), 2),  # temperature in Celsius
+        "humidity": round(random.uniform(69, 74), 2),  # humidity in %
     }
 
 @router.get("/{field_id}", 
